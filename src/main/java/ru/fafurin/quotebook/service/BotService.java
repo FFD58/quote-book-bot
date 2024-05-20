@@ -11,7 +11,9 @@ import ru.fafurin.quotebook.model.Chat;
 import ru.fafurin.quotebook.model.Quote;
 import ru.fafurin.quotebook.repository.ChatRepository;
 
+import java.io.InputStream;
 import java.util.Optional;
+import java.util.Properties;
 import java.util.Random;
 
 @Service
@@ -21,12 +23,13 @@ public class BotService {
     @Autowired
     private QuoteService quoteService;
 
-    private final TelegramBot bot = new TelegramBot("6269429359:AAGP3tXrUD2mIUe75hMiVy-i1iC0AiEE6Fc");
+    private final TelegramBot bot;
 
     private static final Long FIRST_QUOTE_ID = 1L;
     private static final Long LAST_QUOTE_ID = 2992L;
 
     public BotService() {
+        this.bot = new TelegramBot(loadBotToken());
         bot.setUpdatesListener(updates -> {
             for (Update update : updates) {
                 updateHandle(update);
@@ -99,4 +102,20 @@ public class BotService {
         SendResponse response = bot.execute(new SendMessage(chatId, text));
         System.out.println(response);
     }
+
+    private String loadBotToken() {
+        try (InputStream input = BotService.class.getClassLoader().getResourceAsStream("config.properties")) {
+            Properties prop = new Properties();
+            if (input == null) {
+                System.out.println("Sorry, unable to find config.properties");
+                return null;
+            }
+            prop.load(input);
+            return prop.getProperty("telegram.bot.token");
+        } catch (Exception e) {
+            e.printStackTrace();
+            return null;
+        }
+    }
+
 }
